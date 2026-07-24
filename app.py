@@ -953,7 +953,9 @@ def _sign_out():
 
 def render_auth():
     """Login/signup form — the ONLY thing shown when logged out."""
-    st.title("Reddit Post Analyzer")
+    wordmark()
+    st.title("Read the room before you post.")
+    st.caption("Analyze what performs in any subreddit, then write posts that fit.")
     sb = get_supabase()
     if not sb:
         st.error("Auth is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY.")
@@ -984,6 +986,7 @@ def render_auth():
 
 def render_paywall(email):
     """Upgrade page — the ONLY thing shown when out of free runs and not subscribed."""
+    wordmark()
     st.title("Upgrade to Pro")
     st.write(
         f"You've used your {FREE_RUN_LIMIT} free runs this month. "
@@ -998,8 +1001,67 @@ def render_paywall(email):
         _sign_out()
 
 
+BRAND_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+/* Body font */
+html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"],
+input, textarea, select, button, .stMarkdown, p, li, label {
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+}
+
+/* Headings -> Fraunces editorial serif */
+h1, h2, h3, h4,
+[data-testid="stHeading"] h1, [data-testid="stHeading"] h2, [data-testid="stHeading"] h3 {
+    font-family: 'Fraunces', Georgia, serif !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.015em;
+}
+h1 { font-weight: 400 !important; line-height: 1.08 !important; }
+
+/* Captions read like instrument labels */
+[data-testid="stCaptionContainer"] {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    letter-spacing: 0.02em;
+}
+
+/* Buttons: amber fill comes from theme primaryColor; refine shape + weight */
+.stButton > button, .stFormSubmitButton > button, .stLinkButton > a,
+[data-testid="stBaseButton-primary"], [data-testid="stBaseButton-secondary"] {
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.01em;
+}
+
+/* The Subtext wordmark */
+.subtext-mark {
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.30em;
+    text-transform: uppercase;
+    color: #E9B15A;
+    font-size: 0.8rem;
+    margin: 0 0 0.15rem 0;
+}
+
+/* Trim default Streamlit chrome for a product feel */
+[data-testid="stDecoration"] { display: none; }
+footer { visibility: hidden; }
+</style>
+"""
+
+
+def inject_brand():
+    st.markdown(BRAND_CSS, unsafe_allow_html=True)
+
+
+def wordmark():
+    st.markdown('<p class="subtext-mark">Subtext</p>', unsafe_allow_html=True)
+
+
 # UI
-st.set_page_config(page_title="Reddit Post Analyzer", layout="centered")
+st.set_page_config(page_title="Subtext", layout="centered")
+inject_brand()
 
 # Auth gate: when logged out, show only the login/signup form.
 if not st.session_state.get("user_email"):
@@ -1013,7 +1075,8 @@ if not st.session_state.get("subscription_active") and get_run_count(USER_EMAIL)
     render_paywall(USER_EMAIL)
     st.stop()
 
-st.title("Reddit Post Analyzer")
+wordmark()
+st.title("Read the room before you post.")
 
 with st.sidebar:
     st.caption(f"Signed in as {USER_EMAIL}")
