@@ -3,90 +3,304 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reddit Post Analyzer — Find out what actually works in your subreddit</title>
+  <title>Subtext — Read the subtext of any subreddit</title>
+  <meta name="description" content="Subtext analyzes what actually performs in a subreddit, then helps you write posts that read like a member wrote them — not an ad." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0d0f12;
-      --panel: #16191f;
-      --text: #e8eaed;
-      --muted: #9aa0a6;
-      --accent: #ff4500;
-      --border: #262a31;
+      --ink: #131720;
+      --slate: #1B2129;
+      --line: #2A3140;
+      --noise: #868FA1;
+      --paper: #E7E3D9;
+      --signal: #E9B15A;
+
+      --serif: "Fraunces", Georgia, serif;
+      --sans: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+
+      --col: 900px;
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: var(--sans);
+      font-size: 17px;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      /* faint vertical noise-to-signal wash */
+      background-image: radial-gradient(120% 60% at 50% -10%, rgba(233, 177, 90, 0.06), transparent 60%);
+      background-repeat: no-repeat;
     }
-    .wrap {
-      max-width: 760px;
+
+    .col {
+      width: 100%;
+      max-width: var(--col);
       margin: 0 auto;
-      padding: 12vh 24px 10vh;
+      padding: 0 24px;
     }
+
+    /* ---- Signal trace: the signature motif ---- */
+    .signal { position: relative; height: 40px; margin: 0; overflow: visible; }
+    .signal svg { display: block; width: 100%; height: 40px; }
+    .signal .base { stroke: var(--line); stroke-width: 1; fill: none; }
+    .signal .wave { stroke: var(--signal); stroke-width: 1.5; fill: none; opacity: 0.55; }
+    .signal .scan {
+      fill: var(--signal);
+      filter: drop-shadow(0 0 6px rgba(233, 177, 90, 0.8));
+    }
+    @keyframes trace {
+      0%   { transform: translateX(0); opacity: 0; }
+      8%   { opacity: 1; }
+      92%  { opacity: 1; }
+      100% { transform: translateX(1200px); opacity: 0; }
+    }
+    .signal--live .scan {
+      animation: trace 7s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .signal--live .scan { animation: none; opacity: 0.6; }
+    }
+
+    /* ---- Eyebrow / wordmark ---- */
+    .mark {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--signal);
+    }
+
+    /* ---- Hero ---- */
+    .hero { padding: 15vh 0 6vh; }
+    .hero .mark { margin-bottom: 26px; }
     h1 {
-      font-size: clamp(2rem, 5vw, 3.2rem);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-      margin-bottom: 20px;
+      font-family: var(--serif);
+      font-optical-sizing: auto;
+      font-weight: 400;
+      font-size: clamp(2.5rem, 6.5vw, 4.2rem);
+      line-height: 1.04;
+      letter-spacing: -0.015em;
+      max-width: 15ch;
+      margin-bottom: 26px;
     }
-    .sub {
-      color: var(--muted);
-      font-size: 1.15rem;
-      margin-bottom: 44px;
-      max-width: 560px;
+    h1 em { font-style: italic; color: var(--signal); }
+    .lede {
+      color: var(--noise);
+      font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+      max-width: 54ch;
+      margin-bottom: 40px;
     }
-    ul.features {
-      list-style: none;
-      margin: 0 0 48px;
-      display: grid;
-      gap: 16px;
-    }
-    ul.features li {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px 20px;
-      font-size: 1.05rem;
-    }
-    ul.features li b { color: var(--text); }
-    ul.features li span { color: var(--muted); display: block; font-size: 0.95rem; }
-    .cta {
-      display: inline-block;
-      background: var(--accent);
-      color: #fff;
-      text-decoration: none;
+    .lede b { color: var(--paper); font-weight: 500; }
+
+    /* ---- CTA button ---- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5em;
+      background: var(--signal);
+      color: var(--ink);
+      font-family: var(--sans);
       font-weight: 600;
-      font-size: 1.1rem;
-      padding: 15px 30px;
-      border-radius: 10px;
-      transition: transform 0.1s ease, opacity 0.1s ease;
+      font-size: 1.02rem;
+      letter-spacing: -0.01em;
+      text-decoration: none;
+      padding: 15px 28px;
+      border-radius: 8px;
+      transition: transform 0.12s ease, box-shadow 0.2s ease;
+      box-shadow: 0 0 0 rgba(233, 177, 90, 0);
     }
-    .cta:hover { transform: translateY(-1px); opacity: 0.92; }
-    footer {
-      margin-top: 64px;
-      color: var(--muted);
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px -8px rgba(233, 177, 90, 0.45);
+    }
+
+    /* ---- Section scaffolding ---- */
+    section { padding: 7vh 0; }
+    .seclabel {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--noise);
+      margin-bottom: 30px;
+    }
+    .seclabel span { color: var(--signal); }
+
+    /* ---- Rows (steps + features) ---- */
+    .rows { border-top: 1px solid var(--line); }
+    .row {
+      display: grid;
+      grid-template-columns: 3.5rem 1fr;
+      gap: 24px;
+      padding: 30px 0;
+      border-bottom: 1px solid var(--line);
+      align-items: start;
+    }
+    .row .idx {
+      font-family: var(--mono);
       font-size: 0.85rem;
+      color: var(--signal);
+      padding-top: 0.35em;
+    }
+    .row h3 {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.4rem;
+      letter-spacing: -0.01em;
+      margin-bottom: 8px;
+    }
+    .row p { color: var(--noise); max-width: 58ch; }
+
+    /* ---- Closing CTA ---- */
+    .close { text-align: left; padding: 9vh 0 6vh; }
+    .close h2 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+      line-height: 1.1;
+      letter-spacing: -0.015em;
+      max-width: 18ch;
+      margin-bottom: 32px;
+    }
+
+    /* ---- Footer ---- */
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 34px 0 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    footer .name { font-family: var(--mono); letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.8rem; color: var(--paper); }
+    footer .note { color: var(--noise); font-size: 0.85rem; }
+
+    @media (max-width: 560px) {
+      .row { grid-template-columns: 2.6rem 1fr; gap: 16px; }
+      .hero { padding: 11vh 0 4vh; }
     }
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <h1>Find out what actually works in your subreddit — then generate posts that fit</h1>
-    <p class="sub">Stop guessing. Analyze the top-performing posts in any community and turn what you learn into posts that read like a real member wrote them.</p>
+  <!-- Reusable signal trace: flat noise baseline that lifts into a waveform at center -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <path id="trace-path"
+        d="M0 20 H470
+           C 492 20 494 7 516 7 S 540 33 562 33 S 586 7 608 7
+           S 632 33 654 33 S 678 7 700 7 S 720 20 742 20 H1200" />
+    </defs>
+  </svg>
 
-    <ul class="features">
-      <li><b>Reverse-engineer the winners.</b><span>Scan the highest-engagement posts and get a playbook of the hooks, tone, and format that succeed there.</span></li>
-      <li><b>Mine what the community actually wants.</b><span>Pull the real pain points, questions, and vocabulary from the comments — not just the posts.</span></li>
-      <li><b>Generate posts that fit, not ads.</b><span>Get title-weighted drafts tuned to the subreddit's style, with built-in rule checks so you don't get flagged.</span></li>
-    </ul>
+  <main class="col">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="mark">Subtext</div>
+      <h1>Every subreddit has a <em>subtext</em>.</h1>
+      <p class="lede">Subtext reads what actually performs in a community, then helps you write posts that fit its voice — <b>so you sound like a member, not an ad.</b></p>
+      <a class="btn" href="https://subtextinsights.streamlit.app">Try it free &rarr;</a>
+    </header>
 
-    <a class="cta" href="https://your-app-url.streamlit.app">Try it free &rarr;</a>
+    <!-- signature divider (animated, once per hero) -->
+    <div class="signal signal--live" aria-hidden="true">
+      <svg viewBox="0 0 1200 40" preserveAspectRatio="none">
+        <line class="base" x1="0" y1="20" x2="1200" y2="20" />
+        <use href="#trace-path" class="wave" />
+        <circle class="scan" cx="0" cy="20" r="3" />
+      </svg>
+    </div>
 
-    <footer>Reddit Post Analyzer</footer>
+    <!-- HOW IT WORKS -->
+    <section>
+      <div class="seclabel">How it works <span>/ 3 steps</span></div>
+      <div class="rows">
+        <div class="row">
+          <div class="idx">01</div>
+          <div>
+            <h3>Analyze</h3>
+            <p>Point Subtext at any subreddit. It pulls the top-performing posts and the comment threads underneath them.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="idx">02</div>
+          <div>
+            <h3>Decode</h3>
+            <p>It surfaces the hooks, tone, format, and unmet needs that actually drive engagement in that community.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="idx">03</div>
+          <div>
+            <h3>Post</h3>
+            <p>Generate drafts tuned to that subreddit's voice, checked against its rules before you hit submit.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- signature divider (static) -->
+    <div class="signal" aria-hidden="true">
+      <svg viewBox="0 0 1200 40" preserveAspectRatio="none">
+        <line class="base" x1="0" y1="20" x2="1200" y2="20" />
+        <use href="#trace-path" class="wave" />
+      </svg>
+    </div>
+
+    <!-- WHAT YOU GET -->
+    <section>
+      <div class="seclabel">What you get <span>/ 3 outputs</span></div>
+      <div class="rows">
+        <div class="row">
+          <div class="idx">A</div>
+          <div>
+            <h3>A playbook per subreddit</h3>
+            <p>The hooks, tone, and format that win in that specific community — pulled from real posts, not generic best practices.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="idx">B</div>
+          <div>
+            <h3>The subtext, from the comments</h3>
+            <p>The pain points, questions, and exact vocabulary members use, mined from the threads under each top post.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="idx">C</div>
+          <div>
+            <h3>Posts that fit, not ads</h3>
+            <p>Title-weighted drafts written in the community's voice, with rule checks so you don't get flagged or removed.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- signature divider (static) -->
+    <div class="signal" aria-hidden="true">
+      <svg viewBox="0 0 1200 40" preserveAspectRatio="none">
+        <line class="base" x1="0" y1="20" x2="1200" y2="20" />
+        <use href="#trace-path" class="wave" />
+      </svg>
+    </div>
+
+    <!-- CLOSING CTA -->
+    <section class="close">
+      <h2>Stop guessing what a subreddit wants.</h2>
+      <a class="btn" href="https://subtextinsights.streamlit.app">Try it free &rarr;</a>
+    </section>
+
+    <footer>
+      <span class="name">Subtext</span>
+      <span class="note">Read the room before you post.</span>
+    </footer>
   </main>
 </body>
 </html>
