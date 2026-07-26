@@ -990,10 +990,10 @@ def render_paywall(email):
     st.title("Upgrade to Pro")
     st.write(
         f"You've used your {FREE_RUN_LIMIT} free runs this month. "
-        "Upgrade to Pro for $15/month for unlimited runs."
+        "Upgrade to Pro for $10/month for unlimited runs."
     )
     if STRIPE_PAYMENT_LINK:
-        st.link_button("Upgrade — $15/month", STRIPE_PAYMENT_LINK, type="primary")
+        st.link_button("Upgrade — $10/month", STRIPE_PAYMENT_LINK, type="primary")
     else:
         st.error("Billing is not configured. Set STRIPE_PAYMENT_LINK.")
     st.caption(f"Signed in as {email}")
